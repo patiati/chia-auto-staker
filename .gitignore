@@ -1,0 +1,12 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/.vs
+/ChiaAutoStaker/.vs/ChiaAutoStaker/v17
+/ChiaAutoStaker/bin/Debug/net6.0
+/ChiaAutoStaker/obj
+/ChiaAutoStaker/.vs/ChiaAutoStaker/DesignTimeBuild
+/ChiaAutoStaker/.vs/ChiaAutoStaker/config
+/ChiaAutoStaker/bin/Release/net6.0/win-x64
+*.user
