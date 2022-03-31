@@ -26,7 +26,7 @@ namespace ChiaAutoStaker
             return Host.CreateDefaultBuilder()
                 .ConfigureAppConfiguration(app =>
                 {
-                    app.AddJsonFile("appsettings.json");
+                    app.AddJsonFile("ChiaAutoStaker.config.json");
                 })
                 .ConfigureServices(services =>
                 {
