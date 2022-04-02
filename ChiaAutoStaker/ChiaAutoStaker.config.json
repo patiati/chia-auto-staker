@@ -20,6 +20,12 @@
         "Name": "Profit",
         "Folder": "profit-blockchain",
         "Executable": "profit.exe"
+      },
+      {
+        "Enabled": true,
+        "Name": "EcoStake",
+        "Folder": "ecostake-blockchain",
+        "Executable": "ecostake.exe"
       }
     ]
   }
