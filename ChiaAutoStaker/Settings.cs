@@ -19,6 +19,8 @@
 
         public string Executable { get; set; }
 
+        public string StakingAddress { get; set; }
+
         public string ExecutablePath { get; set; }
     }
 }

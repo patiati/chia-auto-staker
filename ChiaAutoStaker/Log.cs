@@ -7,21 +7,35 @@ namespace ChiaAutoStaker
     {
         private readonly object lockObject = new object();
         private readonly string logFile;
+        private bool openLine = false;
 
         public Log(IConfiguration configuration)
         {
             logFile = configuration["Settings:LogFile"];
 
             if (!string.IsNullOrEmpty(logFile))
-                Write($"Log file enabled: {logFile}");
+                WriteLine($"Log file enabled: {logFile}");
         }
 
         public void Write(string message, ConsoleColor? consoleColor = null)
         {
+            Write(message, consoleColor, false);
+        }
+
+        public void WriteLine(string message, ConsoleColor? consoleColor = null)
+        {
+            Write(message, consoleColor, true);
+        }
+
+        private void Write(string message, ConsoleColor? consoleColor, bool newLine)
+        {
             lock (lockObject)
             {
-                Console.ForegroundColor = ConsoleColor.Cyan;
-                Console.Write($"{DateTime.Now.ToString(CultureInfo.InvariantCulture)} ");
+                if (!openLine)
+                {
+                    Console.ForegroundColor = ConsoleColor.Cyan;
+                    Console.Write($"[{DateTime.Now.ToString(CultureInfo.InvariantCulture)}]");
+                }
 
                 if (consoleColor.HasValue)
                 {
@@ -32,16 +46,36 @@ namespace ChiaAutoStaker
                     Console.ResetColor();
                 }
 
-                Console.WriteLine(message);
+                Console.Write($" {message}");
+
+                if (newLine)
+                {
+                    Console.WriteLine();
+                }
+
                 Console.ResetColor();
 
                 //file
                 if (!string.IsNullOrEmpty(this.logFile))
                 {
-                    var line = $"{DateTime.Now.ToString(CultureInfo.InvariantCulture)} {message}{Environment.NewLine}";
+                    var text = string.Empty;
 
-                    File.AppendAllText(this.logFile, line);
+                    if (!openLine) 
+                    { 
+                        text += $"{DateTime.Now.ToString(CultureInfo.InvariantCulture)}";
+                    }
+
+                    text += $" {message}";
+
+                    if (newLine)
+                    {
+                        text += Environment.NewLine;
+                    }
+
+                    File.AppendAllText(this.logFile, text);
                 }
+
+                openLine = !newLine;
             }
         }
     }

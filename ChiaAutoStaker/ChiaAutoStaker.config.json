@@ -1,31 +1,42 @@
 {
   "Settings": {
-    "IntervalSeconds": 600,
+    "IntervalSeconds": 300,
     "LogFile": "ChiaAutoStaker.log",
     "Forks": [
       {
         "Enabled": true,
         "Name": "Silicoin",
         "Folder": "SIT",
-        "Executable": "sit.exe"
+        "Executable": "sit.exe",
+        "StakingAddress": ""
       },
       {
         "Enabled": true,
         "Name": "Gold",
         "Folder": "gold-blockchain",
-        "Executable": "gold.exe"
+        "Executable": "gold.exe",
+        "StakingAddress": ""
       },
       {
         "Enabled": true,
         "Name": "Profit",
         "Folder": "profit-blockchain",
-        "Executable": "profit.exe"
+        "Executable": "profit.exe",
+        "StakingAddress": ""
       },
       {
         "Enabled": true,
         "Name": "EcoStake",
         "Folder": "ecostake-blockchain",
-        "Executable": "ecostake.exe"
+        "Executable": "ecostake.exe",
+        "StakingAddress": ""
+      },
+      {
+        "Enabled": true,
+        "Name": "Petroleum",
+        "Folder": "Petroleum",
+        "Executable": "petroleum.exe",
+        "StakingAddress": ""
       }
     ]
   }

@@ -8,11 +8,6 @@ namespace ChiaAutoStaker
     internal class Worker
     {
         private static readonly Regex SpendableRegex = new(@"-Spendable: (\d*\.\d*) (\w*)");
-        private static readonly Regex StakingRegex = new(@"Staking addresses:(?:\n|\r|\r\n)  (.*) \(balance: (\d*\.?\d*)\, plots: (\d*)\)");
-        private static readonly Regex NetworkSpaceRegex = new(@"Estimated network space: (.*)");
-        private static readonly Regex StakingFactorRegex = new(@"Estimated staking factor: (.*)");
-        private static readonly Regex ExpectedTimeToWinRegex = new(@"Expected time to win: (.*)");
-
         private readonly IConfiguration configuration;
         private readonly Log log;
 
@@ -28,7 +23,7 @@ namespace ChiaAutoStaker
         {
             var settings = this.GetSettings();
 
-            log.Write("Looking for forks ...");
+            log.WriteLine("Looking for forks ...");
 
             var enabledForks = settings.Forks.Where(f => f.Enabled);
 
@@ -36,17 +31,16 @@ namespace ChiaAutoStaker
             {
                 foreach (var fork in enabledForks)
                 {
-                    log.Write($"{fork.Name} found!", ConsoleColor.Green);
-                    log.Write($"{fork.ExecutablePath}");
+                    log.WriteLine($"{fork.Name} found!", ConsoleColor.Green);
                 }
             }
             else
             {
-                log.Write("No fork found!", ConsoleColor.Red);
+                log.WriteLine("No fork found!", ConsoleColor.Red);
                 return;
             }
 
-            log.Write($"Interval: {settings.IntervalSeconds} seconds");
+            log.WriteLine($"Interval: {settings.IntervalSeconds} seconds");
 
             while (true)
             {
@@ -58,30 +52,23 @@ namespace ChiaAutoStaker
                     foreach (var fork in enabledForks)
                     {
                         log.Write($"Checking {fork.Name} ...");
-                        log.Write($"  wallet show:");
                         var wallet = GetWallet(fork);
-                        log.Write($"    Spendable: {wallet.Spendable} {wallet.Symbol}");
-                        log.Write($"  farm summary:");
-                        var farm = GetFarm(fork);
-                        log.Write($"    Balance: {farm.Balance} {wallet.Symbol}");
-                        log.Write($"    Plots: {farm.Plots}");
-                        log.Write($"    NetworkSpace: {farm.NetworkSpace}");
-                        if (!string.IsNullOrEmpty(farm.StakingFactor))
-                            log.Write($"    StakingFactor: {farm.StakingFactor}");
-                        log.Write($"    ETW: {farm.ExpectedTimeToWin}");
+                        log.Write($"{wallet.Spendable} {wallet.Symbol}");
 
                         if (float.Parse(wallet.Spendable, CultureInfo.GetCultureInfo("en-US").NumberFormat) > 0)
                         {
-                            log.Write("  Staking ...");
-                            if (SendStake(fork, wallet, farm))
+                            log.Write("Staking ...");
+                            if (SendStake(fork, wallet))
                             {
-                                log.Write("    Succeded!", ConsoleColor.Green);
+                                log.Write("Succeded!", ConsoleColor.Green);
                             }
                             else
                             {
-                                log.Write("    Failed!", ConsoleColor.Red);
+                                log.Write("Failed!", ConsoleColor.Red);
                             }
                         }
+
+                        log.WriteLine(string.Empty);
                     }
                 }
                 else
@@ -155,54 +142,10 @@ namespace ChiaAutoStaker
             };
         }
 
-        private Farm GetFarm(Fork fork)
-        {
-            var process = new Process
-            {
-                StartInfo = new ProcessStartInfo
-                {
-                    FileName = $"{fork.ExecutablePath}",
-                    Arguments = "farm summary",
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true
-                }
-            };
-            process.Start();
-
-            var output = process.StandardOutput.ReadToEnd();
-
-            var stakingMatch = StakingRegex.Match(output);
-            var stakingAddress = stakingMatch.Success && stakingMatch.Groups.Count > 1 ? stakingMatch.Groups[1].Value : string.Empty;
-            var balance = stakingMatch.Success && stakingMatch.Groups.Count > 2 ? stakingMatch.Groups[2].Value : "0";
-            var plots = stakingMatch.Success && stakingMatch.Groups.Count > 3 ? stakingMatch.Groups[3].Value : "0";
-
-            var networkSpaceMatch = NetworkSpaceRegex.Match(output);
-            var networkSpace = networkSpaceMatch.Success && networkSpaceMatch.Groups.Count > 1 ? networkSpaceMatch.Groups[1].Value.TrimEnd() : string.Empty;
-
-            var stakingFactorMatch = StakingFactorRegex.Match(output);
-            var stakingFactor = stakingFactorMatch.Success && stakingFactorMatch.Groups.Count > 1 ? stakingFactorMatch.Groups[1].Value.TrimEnd() : string.Empty;
-
-            var expectedTimeToWinMatch = ExpectedTimeToWinRegex.Match(output);
-            var expectedTimeToWin = expectedTimeToWinMatch.Success && expectedTimeToWinMatch.Groups.Count > 1 ? expectedTimeToWinMatch.Groups[1].Value.TrimEnd() : string.Empty;
-
-            process.WaitForExit();
-
-            return new Farm
-            {
-                StakingAddress = stakingAddress,
-                Balance = balance,
-                Plots = plots,
-                NetworkSpace = networkSpace,
-                StakingFactor = stakingFactor,
-                ExpectedTimeToWin = expectedTimeToWin,
-            };
-        }
-
-        private bool SendStake(Fork fork, Wallet wallet, Farm farm)
+        private bool SendStake(Fork fork, Wallet wallet)
         {
             if (!string.IsNullOrEmpty(fork?.ExecutablePath) &&
-                !string.IsNullOrEmpty(farm?.StakingAddress) &&
+                !string.IsNullOrEmpty(fork?.StakingAddress) &&
                 !string.IsNullOrEmpty(wallet?.Spendable) && float.Parse(wallet.Spendable, CultureInfo.GetCultureInfo("en-US").NumberFormat) > 0)
             {
                 var process = new Process
@@ -210,7 +153,7 @@ namespace ChiaAutoStaker
                     StartInfo = new ProcessStartInfo
                     {
                         FileName = $"{fork.ExecutablePath}",
-                        Arguments = $"wallet send -t {farm.StakingAddress} -a {wallet.Spendable}",
+                        Arguments = $"wallet send -t {fork.StakingAddress} -a {wallet.Spendable}",
                         UseShellExecute = false,
                         RedirectStandardOutput = true,
                         RedirectStandardError = true
