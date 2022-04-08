@@ -12,9 +12,6 @@ namespace ChiaAutoStaker
         public Log(IConfiguration configuration)
         {
             logFile = configuration["Settings:LogFile"];
-
-            if (!string.IsNullOrEmpty(logFile))
-                WriteLine($"Log file enabled: {logFile}");
         }
 
         public void Write(string message, ConsoleColor? consoleColor = null)

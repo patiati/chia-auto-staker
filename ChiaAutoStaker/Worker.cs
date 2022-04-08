@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Configuration;
 using System.Diagnostics;
 using System.Globalization;
+using System.Reflection;
 using System.Text.RegularExpressions;
 
 namespace ChiaAutoStaker
@@ -18,6 +19,12 @@ namespace ChiaAutoStaker
         {
             this.log = log;
             this.configuration = configuration;
+
+            log.WriteLine($"ChiaAutoStaker v{Assembly.GetExecutingAssembly().GetName().Version}");
+
+            var logFile = configuration["Settings:LogFile"];
+            if (!string.IsNullOrEmpty(logFile))
+                log.WriteLine($"Log file enabled: {logFile}");
         }
 
         public void DoWork()
@@ -45,7 +52,7 @@ namespace ChiaAutoStaker
 
                         if (float.Parse(wallet.Spendable, CultureInfo.GetCultureInfo("en-US").NumberFormat) > 0)
                         {
-                            log.Write("Staking ...");
+                            log.Write("- Staking ...");
                             if (SendStake(fork, wallet))
                             {
                                 log.Write("Succeded!", ConsoleColor.Green);
