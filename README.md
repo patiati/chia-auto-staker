@@ -10,3 +10,5 @@ Supported forks:
 - Petroleum
 
 See ChiaAutoStaker.config.json for settings.
+
+You can specify staking address in config file, otherwise it will be discovered on startup. The first one of the ```farm summary``` CLI command's output will be used.  
