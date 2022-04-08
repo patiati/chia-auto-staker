@@ -62,7 +62,7 @@ namespace ChiaAutoStaker
 
                     if (!openLine) 
                     { 
-                        text += $"{DateTime.Now.ToString(CultureInfo.InvariantCulture)}";
+                        text += $"[{DateTime.Now.ToString(CultureInfo.InvariantCulture)}]";
                     }
 
                     text += $" {message}";

@@ -8,6 +8,7 @@ namespace ChiaAutoStaker
     internal class Worker
     {
         private static readonly Regex SpendableRegex = new(@"-Spendable: (\d*\.\d*) (\w*)");
+        private static readonly Regex StakingAddressRegex = new(@"Staking addresses:(?:\n|\r|\r\n)  ([0-9a-z]*)");
         private readonly IConfiguration configuration;
         private readonly Log log;
 
@@ -21,24 +22,11 @@ namespace ChiaAutoStaker
 
         public void DoWork()
         {
-            var settings = this.GetSettings();
-
             log.WriteLine("Looking for forks ...");
 
-            var enabledForks = settings.Forks.Where(f => f.Enabled);
+            var settings = this.GetSettings();
 
-            if (enabledForks.Any())
-            {
-                foreach (var fork in enabledForks)
-                {
-                    log.WriteLine($"{fork.Name} found!", ConsoleColor.Green);
-                }
-            }
-            else
-            {
-                log.WriteLine("No fork found!", ConsoleColor.Red);
-                return;
-            }
+            var enabledForks = settings.Forks.Where(f => f.Enabled);
 
             log.WriteLine($"Interval: {settings.IntervalSeconds} seconds");
 
@@ -88,6 +76,8 @@ namespace ChiaAutoStaker
             {
                 try
                 {
+                    // ExecutablePath
+
                     var appFolder = Directory.GetDirectories($"{localAppData}\\{fork.Folder}", "app-*").FirstOrDefault();
 
                     if (!string.IsNullOrEmpty(appFolder))
@@ -97,7 +87,44 @@ namespace ChiaAutoStaker
                         if (File.Exists(exePath))
                         {
                             fork.ExecutablePath = exePath;
+                            log.Write($"{fork.Name} found!", ConsoleColor.Green);
                         }
+                        else
+                        {
+                            fork.Enabled = false;
+                            log.Write($"{fork.Name} not found!", ConsoleColor.Red);
+                        }
+                    }
+
+                    // StakingAddress
+
+                    if (fork.Enabled && string.IsNullOrEmpty(fork.StakingAddress))
+                    {
+                        var process = new Process
+                        {
+                            StartInfo = new ProcessStartInfo
+                            {
+                                FileName = $"{fork.ExecutablePath}",
+                                Arguments = "farm summary",
+                                UseShellExecute = false,
+                                RedirectStandardOutput = true,
+                                RedirectStandardError = true
+                            }
+                        };
+                        process.Start();
+
+                        var output = process.StandardOutput.ReadToEnd();
+
+                        var stakingAddressMatch = StakingAddressRegex.Match(output);
+                        var address = stakingAddressMatch.Success && stakingAddressMatch.Groups.Count > 1 ? stakingAddressMatch.Groups[1].Value : string.Empty;
+
+                        process.WaitForExit();
+
+                        if (!string.IsNullOrEmpty(address))
+                        {
+                            fork.StakingAddress = address;
+                            log.WriteLine($"Staking address: {fork.StakingAddress}", ConsoleColor.Yellow);
+                        } 
                         else
                         {
                             fork.Enabled = false;
