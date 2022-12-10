@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Configuration;
+using Newtonsoft.Json;
 using System.Diagnostics;
 using System.Globalization;
 using System.Reflection;
@@ -8,8 +9,6 @@ namespace ChiaAutoStaker
 {
     internal class Worker
     {
-        private static readonly Regex SpendableRegex = new(@"-Spendable: (\d*\.\d*) (\w*)");
-        private static readonly Regex StakingAddressRegex = new(@"Staking addresses:(?:\n|\r|\r\n)  ([0-9a-z]*)");
         private readonly IConfiguration configuration;
         private readonly Log log;
 
@@ -24,7 +23,9 @@ namespace ChiaAutoStaker
 
             var logFile = configuration["Settings:LogFile"];
             if (!string.IsNullOrEmpty(logFile))
+            {
                 log.WriteLine($"Log file enabled: {logFile}");
+            }
         }
 
         public void DoWork()
@@ -33,24 +34,26 @@ namespace ChiaAutoStaker
 
             var settings = this.GetSettings();
 
-            var enabledForks = settings.Forks.Where(f => f.Enabled);
+            var enabledForks = settings?.Forks?.Where(f => f.Enabled) ?? new Fork[] { };
 
-            log.WriteLine($"Interval: {settings.IntervalSeconds} seconds");
+            log.WriteLine($"Interval: {settings?.IntervalSeconds ?? 300} seconds");
 
             while (true)
             {
                 var now = DateTime.Now;
-                if (lastRun.AddSeconds(settings.IntervalSeconds) <= now)
+                if (lastRun.AddSeconds(settings?.IntervalSeconds ?? 300) <= now)
                 {
                     lastRun = now;
 
+                    log.WriteLine($"Checking wallets.");
+
                     foreach (var fork in enabledForks)
                     {
-                        log.Write($"Checking {fork.Name} ...");
-                        var wallet = GetWallet(fork);
+                        log.Write($"- {fork.Name} ...");
+                        var wallet = GetWallet(fork) ?? new Wallet();
                         log.Write($"{wallet.Spendable} {wallet.Symbol}");
 
-                        if (float.Parse(wallet.Spendable, CultureInfo.GetCultureInfo("en-US").NumberFormat) > 0)
+                        if (float.Parse(wallet.Spendable ?? "0", CultureInfo.GetCultureInfo("en-US").NumberFormat) > 0)
                         {
                             log.Write("- Staking ...");
                             if (SendStake(fork, wallet))
@@ -75,17 +78,27 @@ namespace ChiaAutoStaker
 
         private Settings GetSettings()
         {
-            var settings = configuration.GetRequiredSection("Settings").Get<Settings>();
+            var settings = configuration.Get<Settings>() ?? new Settings();
 
             var localAppData = configuration["LOCALAPPDATA"];
 
-            foreach (var fork in settings.Forks.Where(f => f.Enabled))
+            var forks = settings.Forks?.Where(f => f.Enabled) ?? new Fork[] { };
+
+            foreach (var fork in forks)
             {
                 try
                 {
                     // ExecutablePath
 
-                    var appFolder = Directory.GetDirectories($"{localAppData}\\{fork.Folder}", "app-*").FirstOrDefault();
+                    var appFolder = 
+                        Directory.Exists($"{localAppData}\\{fork.Folder}")
+                            ? Directory.GetDirectories($"{localAppData}\\{fork.Folder}", "app-*").FirstOrDefault()
+                            : string.Empty;
+
+                    if (string.IsNullOrEmpty(appFolder))
+                    {
+                        appFolder = $"{localAppData}\\Programs\\{fork.Folder}";
+                    }
 
                     if (!string.IsNullOrEmpty(appFolder))
                     {
@@ -99,42 +112,57 @@ namespace ChiaAutoStaker
                         else
                         {
                             fork.Enabled = false;
-                            log.Write($"{fork.Name} not found!", ConsoleColor.Red);
+                            log.WriteLine($"{fork.Name} not found!", ConsoleColor.Red);
                         }
                     }
 
                     // StakingAddress
 
-                    if (fork.Enabled && string.IsNullOrEmpty(fork.StakingAddress))
+                    if (fork.Enabled)
                     {
-                        var process = new Process
+                        if (string.IsNullOrEmpty(fork.StakingAddress) &&
+                            !string.IsNullOrEmpty(fork.StakingAddressRegex))
                         {
-                            StartInfo = new ProcessStartInfo
+                            var process = new Process
                             {
-                                FileName = $"{fork.ExecutablePath}",
-                                Arguments = "farm summary",
-                                UseShellExecute = false,
-                                RedirectStandardOutput = true,
-                                RedirectStandardError = true
+                                StartInfo = new ProcessStartInfo
+                                {
+                                    FileName = $"{fork.ExecutablePath}",
+                                    Arguments = fork.StakingAddressCommand,
+                                    UseShellExecute = false,
+                                    RedirectStandardOutput = true,
+                                    RedirectStandardError = true
+                                }
+                            };
+                            process.Start();
+
+                            var output = process.StandardOutput.ReadToEnd();
+
+                            var stakingAddressMatch = new Regex(fork.StakingAddressRegex).Match(output);
+                            var address = 
+                                stakingAddressMatch.Success && stakingAddressMatch.Groups.Count > 1 
+                                    ? stakingAddressMatch.Groups[1].Value 
+                                    : string.Empty;
+
+                            process.WaitForExit();
+
+                            if (!string.IsNullOrEmpty(address))
+                            {
+                                fork.StakingAddress = address;
                             }
-                        };
-                        process.Start();
+                            else
+                            {
+                                fork.Enabled = false;
+                            }
+                        }
 
-                        var output = process.StandardOutput.ReadToEnd();
-
-                        var stakingAddressMatch = StakingAddressRegex.Match(output);
-                        var address = stakingAddressMatch.Success && stakingAddressMatch.Groups.Count > 1 ? stakingAddressMatch.Groups[1].Value : string.Empty;
-
-                        process.WaitForExit();
-
-                        if (!string.IsNullOrEmpty(address))
+                        if (!string.IsNullOrEmpty(fork.StakingAddress))
                         {
-                            fork.StakingAddress = address;
                             log.WriteLine($"Staking address: {fork.StakingAddress}", ConsoleColor.Yellow);
-                        } 
+                        }
                         else
                         {
-                            fork.Enabled = false;
+                            log.WriteLine(string.Empty);
                         }
                     }
                 }
@@ -144,16 +172,31 @@ namespace ChiaAutoStaker
                 }
             }
 
+            SaveConfigFile(settings);
             return settings;
         }
 
-        private Wallet GetWallet(Fork fork)
+        private void SaveConfigFile(Settings settings)
         {
+            var json = JsonConvert.SerializeObject(settings, Formatting.Indented);
+
+            File.WriteAllText("ChiaAutoStaker.config.json", json);
+
+            log.WriteLine("Settings saved.");
+        }
+
+        private Wallet? GetWallet(Fork fork)
+        {
+            if (string.IsNullOrEmpty(fork.WalletRegex))
+            {
+                return null;
+            }
+
             var process = new Process {
                 StartInfo = new ProcessStartInfo
                 {
                     FileName = $"{fork.ExecutablePath}",
-                    Arguments = "wallet show",
+                    Arguments = fork.WalletCommand,
                     UseShellExecute = false,
                     RedirectStandardOutput = true,
                     RedirectStandardError = true
@@ -163,7 +206,7 @@ namespace ChiaAutoStaker
             
             var output = process.StandardOutput.ReadToEnd();
 
-            var spendableMatch = SpendableRegex.Match(output);
+            var spendableMatch = new Regex(fork.WalletRegex).Match(output);
             var spendable = spendableMatch.Success && spendableMatch.Groups.Count > 1 ? spendableMatch.Groups[1].Value : "0.0";
             var symbol = spendableMatch.Success && spendableMatch.Groups.Count > 2 ? spendableMatch.Groups[2].Value : string.Empty;
 
@@ -180,14 +223,16 @@ namespace ChiaAutoStaker
         {
             if (!string.IsNullOrEmpty(fork?.ExecutablePath) &&
                 !string.IsNullOrEmpty(fork?.StakingAddress) &&
-                !string.IsNullOrEmpty(wallet?.Spendable) && float.Parse(wallet.Spendable, CultureInfo.GetCultureInfo("en-US").NumberFormat) > 0)
+                !string.IsNullOrEmpty(fork.StakingCommand) &&
+                !string.IsNullOrEmpty(wallet?.Spendable) && 
+                float.Parse(wallet.Spendable, CultureInfo.GetCultureInfo("en-US").NumberFormat) > 0)
             {
                 var process = new Process
                 {
                     StartInfo = new ProcessStartInfo
                     {
                         FileName = $"{fork.ExecutablePath}",
-                        Arguments = $"wallet send -t {fork.StakingAddress} -a {wallet.Spendable}",
+                        Arguments = fork.StakingCommand.Replace("{address}", fork.StakingAddress).Replace("{amount}", wallet.Spendable),
                         UseShellExecute = false,
                         RedirectStandardOutput = true,
                         RedirectStandardError = true
