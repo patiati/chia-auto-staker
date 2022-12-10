@@ -8,6 +8,7 @@ Supported forks:
 - Profit
 - Ecostake
 - Petroleum
+- Coffee
 - GreenBTC
 
 During the first start, which is slower, staking addresses are loaded and persisted in the configuration file.
