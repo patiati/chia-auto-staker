@@ -10,4 +10,4 @@ Supported forks:
 - Petroleum
 - GreenBTC
 
-During the first start, which is slower, staking addresses are loaded and persisted in the configuraion file.
+During the first start, which is slower, staking addresses are loaded and persisted in the configuration file.
