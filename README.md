@@ -10,6 +10,7 @@ Supported forks:
 - Petroleum
 - Coffee
 - GreenBTC
+- Ball
 
 During the first start, which is slower, staking addresses are loaded and persisted in the configuration file.
 

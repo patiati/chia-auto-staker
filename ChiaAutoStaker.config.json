@@ -71,6 +71,16 @@
       "WalletCommand": "wallet show",
       "WalletRegex": "-Spendable:(?:\\s+)(\\d*\\.\\d*) (\\w*)",
       "StakingCommand": "staking send -a {amount}"
+    },
+    {
+      "Name": "Ball",
+      "Folder": "Ball",
+      "Executable": "ball.exe",
+      "StakingAddressCommand": "farm summary",
+      "StakingAddressRegex": "Staking address(?:es|):(?:\\n|\\r|\\r\\n|)(?:\\s+)([0-9a-z]*)",
+      "WalletCommand": "wallet show",
+      "WalletRegex": "-Spendable:(?:\\s+)(\\d*\\.\\d*) (\\w*)",
+      "StakingCommand": "wallet send -t {address} -a {amount}"
     }
   ]
 }
