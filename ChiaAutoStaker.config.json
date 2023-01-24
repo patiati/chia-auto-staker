@@ -10,7 +10,9 @@
       "StakingAddressRegex": "Staking address(?:es|):(?:\\n|\\r|\\r\\n|)(?:\\s+)([0-9a-z]*)",
       "WalletCommand": "wallet show",
       "WalletRegex": "-Spendable:(?:\\s+)(\\d*\\.\\d*) (\\w*)",
-      "StakingCommand": "wallet send -t {address} -a {amount}"
+      "StakingCommand": "wallet send -t {address} -a {amount}",
+      "AllTheBlocksForkPath": "silicoin",
+      "BalanceDecimalPlaces": 12
     },
     {
       "Name": "Gold",
@@ -20,7 +22,9 @@
       "StakingAddressRegex": "Staking address(?:es|):(?:\\n|\\r|\\r\\n|)(?:\\s+)([0-9a-z]*)",
       "WalletCommand": "wallet show",
       "WalletRegex": "-Spendable:(?:\\s+)(\\d*\\.\\d*) (\\w*)",
-      "StakingCommand": "wallet send -t {address} -a {amount}"
+      "StakingCommand": "wallet send -t {address} -a {amount}",
+      "AllTheBlocksForkPath": "gold",
+      "BalanceDecimalPlaces": 12
     },
     {
       "Name": "Profit",
@@ -30,7 +34,9 @@
       "StakingAddressRegex": "Staking address(?:es|):(?:\\n|\\r|\\r\\n|)(?:\\s+)([0-9a-z]*)",
       "WalletCommand": "wallet show",
       "WalletRegex": "-Spendable:(?:\\s+)(\\d*\\.\\d*) (\\w*)",
-      "StakingCommand": "wallet send -t {address} -a {amount}"
+      "StakingCommand": "wallet send -t {address} -a {amount}",
+      "AllTheBlocksForkPath": "profit",
+      "BalanceDecimalPlaces": 12
     },
     {
       "Name": "EcoStake",
@@ -40,7 +46,9 @@
       "StakingAddressRegex": "Staking address(?:es|):(?:\\n|\\r|\\r\\n|)(?:\\s+)([0-9a-z]*)",
       "WalletCommand": "wallet show",
       "WalletRegex": "-Spendable:(?:\\s+)(\\d*\\.\\d*) (\\w*)",
-      "StakingCommand": "wallet send -t {address} -a {amount}"
+      "StakingCommand": "wallet send -t {address} -a {amount}",
+      "AllTheBlocksForkPath": "ecostake",
+      "BalanceDecimalPlaces": 12
     },
     {
       "Name": "Petroleum",
@@ -50,7 +58,9 @@
       "StakingAddressRegex": "Staking address(?:es|):(?:\\n|\\r|\\r\\n|)(?:\\s+)([0-9a-z]*)",
       "WalletCommand": "wallet show",
       "WalletRegex": "-Spendable:(?:\\s+)(\\d*\\.\\d*) (\\w*)",
-      "StakingCommand": "wallet send -t {address} -a {amount}"
+      "StakingCommand": "wallet send -t {address} -a {amount}",
+      "AllTheBlocksForkPath": "petroleum",
+      "BalanceDecimalPlaces": 12
     },
     {
       "Name": "Coffee",
@@ -60,7 +70,9 @@
       "StakingAddressRegex": "Staking address(?:es|):(?:\\n|\\r|\\r\\n|)(?:\\s+)([0-9a-z]*)",
       "WalletCommand": "wallet show",
       "WalletRegex": "-Spendable:(?:\\s+)(\\d*\\.\\d*) (\\w*)",
-      "StakingCommand": "wallet send -t {address} -a {amount}"
+      "StakingCommand": "wallet send -t {address} -a {amount}",
+      "AllTheBlocksForkPath": "coffee",
+      "BalanceDecimalPlaces": 12
     },
     {
       "Name": "GreenBTC",
@@ -70,7 +82,9 @@
       "StakingAddressRegex": "Staking address(?:es|):(?:\\n|\\r|\\r\\n|)(?:\\s+)([0-9a-z]*)",
       "WalletCommand": "wallet show",
       "WalletRegex": "-Spendable:(?:\\s+)(\\d*\\.\\d*) (\\w*)",
-      "StakingCommand": "staking send -a {amount}"
+      "StakingCommand": "staking send -a {amount}",
+      "AllTheBlocksForkPath": "greenbtc",
+      "BalanceDecimalPlaces": 12
     },
     {
       "Name": "Ball",
@@ -80,7 +94,9 @@
       "StakingAddressRegex": "Staking address(?:es|):(?:\\n|\\r|\\r\\n|)(?:\\s+)([0-9a-z]*)",
       "WalletCommand": "wallet show",
       "WalletRegex": "-Spendable:(?:\\s+)(\\d*\\.\\d*) (\\w*)",
-      "StakingCommand": "wallet send -t {address} -a {amount}"
+      "StakingCommand": "wallet send -t {address} -a {amount}",
+      "AllTheBlocksForkPath": "ballcoin",
+      "BalanceDecimalPlaces": 12
     }
   ]
 }

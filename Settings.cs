@@ -36,5 +36,9 @@ namespace ChiaAutoStaker
         public string? WalletRegex { get; set; }
 
         public string? StakingCommand { get; set; }
+
+        public string? AllTheBlocksForkPath { get; set; }
+
+        public byte? BalanceDecimalPlaces { get; set; }
     }
 }

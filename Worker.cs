@@ -2,6 +2,7 @@
 using Newtonsoft.Json;
 using System.Diagnostics;
 using System.Globalization;
+using System.Net;
 using System.Reflection;
 using System.Text.RegularExpressions;
 
@@ -45,13 +46,22 @@ namespace ChiaAutoStaker
                 {
                     lastRun = now;
 
-                    log.WriteLine($"Checking wallets.");
+                    log.WriteLine($"Checking wallets ...");
 
                     foreach (var fork in enabledForks)
                     {
-                        log.Write($"- {fork.Name} ...");
+                        log.Write($"- {fork.Name}:");
                         var wallet = GetWallet(fork) ?? new Wallet();
-                        log.Write($"{wallet.Spendable} {wallet.Symbol}");
+                        log.Write($"{wallet.Spendable!.TrimEnd('0').TrimEnd('.')} {wallet.Symbol}");
+
+                        var stakedBalance = GetStakedBalance(fork);
+                        var formattedStakedBalance = 
+                            stakedBalance.ToString(
+                                $"F{fork.BalanceDecimalPlaces}", 
+                                CultureInfo.GetCultureInfo("en-US").NumberFormat)
+                            .TrimEnd('0')
+                            .TrimEnd('.');
+                        log.Write($"(staked: {formattedStakedBalance} {wallet.Symbol})");
 
                         if (float.Parse(wallet.Spendable ?? "0", CultureInfo.GetCultureInfo("en-US").NumberFormat) > 0)
                         {
@@ -244,6 +254,29 @@ namespace ChiaAutoStaker
             }
 
             return false;
+        }
+
+        private float GetStakedBalance(Fork fork)
+        {
+            if (!string.IsNullOrEmpty(fork.AllTheBlocksForkPath) &&
+                !string.IsNullOrEmpty(fork.StakingAddress))
+            {
+                try
+                {
+                    using var client = new HttpClient();
+                    var response = client.GetStringAsync($"https://api.alltheblocks.net/{fork.AllTheBlocksForkPath}/address/{fork.StakingAddress}").Result;
+                    var result = JsonConvert.DeserializeObject<BalanceResponse>(response);
+
+                    var balance = Convert.ToDouble(result!.Balance);
+
+                    return
+                        (float)(fork.BalanceDecimalPlaces.HasValue
+                            ? balance / Math.Pow(10, fork.BalanceDecimalPlaces.Value)
+                            : balance);
+                } catch { }
+            }
+
+            return 0f;
         }
     }
 }
