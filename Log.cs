@@ -11,7 +11,7 @@ namespace ChiaAutoStaker
 
         public Log(IConfiguration configuration)
         {
-            logFile = configuration["Settings:LogFile"] ?? string.Empty;
+            logFile = configuration["LogFile"] ?? string.Empty;
         }
 
         public void Write(string message, ConsoleColor? consoleColor = null)

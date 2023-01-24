@@ -22,7 +22,7 @@ namespace ChiaAutoStaker
 
             log.WriteLine($"ChiaAutoStaker v{Assembly.GetExecutingAssembly().GetName().Version}");
 
-            var logFile = configuration["Settings:LogFile"];
+            var logFile = configuration["LogFile"];
             if (!string.IsNullOrEmpty(logFile))
             {
                 log.WriteLine($"Log file enabled: {logFile}");
@@ -37,12 +37,12 @@ namespace ChiaAutoStaker
 
             var enabledForks = settings?.Forks?.Where(f => f.Enabled) ?? new Fork[] { };
 
-            log.WriteLine($"Interval: {settings?.IntervalSeconds ?? 300} seconds");
+            log.WriteLine($"Interval: {settings?.IntervalSeconds ?? 600} seconds");
 
             while (true)
             {
                 var now = DateTime.Now;
-                if (lastRun.AddSeconds(settings?.IntervalSeconds ?? 300) <= now)
+                if (lastRun.AddSeconds(settings?.IntervalSeconds ?? 600) <= now)
                 {
                     lastRun = now;
 

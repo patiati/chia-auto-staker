@@ -1,5 +1,5 @@
 {
-  "IntervalSeconds": 300,
+  "IntervalSeconds": 600,
   "LogFile": "ChiaAutoStaker.log",
   "Forks": [
     {
